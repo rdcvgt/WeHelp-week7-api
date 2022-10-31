@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="{{ url_for('static',filename='style.css') }}">
+    <title>留言板</title>
+</head>
+
+<body>
+    <header class="warning">
+        <strong>歡迎光臨，這是會員頁！</strong>
+    </header>
+    <main class="board">
+        <div class="memberBtnArea">
+            <a class="memberBtn" href="/signout">登出</a>
+        </div>
+        <h1>Comment</h1>
+        <h3>嗨！{{username}}</h3>
+        <div class="nicknameArea searchName">
+            <span>查詢會員姓名：</span>
+            <input class="inputNickname userNameInput" type="text">
+            <button class="submitBtn userNameBtn">查詢</button>
+        </div>
+        <div class="nicknameArea editName">
+            <span>更改我的姓名：</span>
+            <input class="inputNickname editUserNameInput" type="text">
+            <input class="passUsername" type="hidden" value={{username}}>
+            <button class="submitBtn editUserNameBtn">更改</button>
+        </div>
+        <form class="commentArea" method="POST" action="/message">
+            想說些什麼？
+            <textarea class="inputContent" name="content" rows="5"></textarea>
+            <div>
+                <input class="submitBtn" type="submit">
+            </div>
+        </form>
+        <hr class="hr">
+
+        <section>
+            {%for user in result%}
+
+            <div class="commentArea">
+                <div class="avatarArea">
+                    <div class="authorAvarta">
+                    </div>
+                </div>
+
+                <div class="author">
+                    <div class="authorInfo">
+                        <div class="name">
+                            {{user[0]}}(@{{user[1]}})
+                        </div>
+                        <div class="time">
+                            ・{{user[3]}}
+                        </div>
+                    </div>
+                    <div class="content">{{user[2]}}</div>
+                </div>
+
+            </div>
+
+            {% endfor %}
+        </section>
+    </main>
+    <script type="text/javascript" src="../static/searchName.js"> </script>
+    <script type="text/javascript" src="../static/editUsername.js"> </script>
+
+</body>
+
+</html>

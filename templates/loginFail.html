@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="{{ url_for('static',filename='style.css') }}">
+    <title>留言板</title>
+</head>
+<body>
+    <header class="warning">
+        <strong>失敗頁面</strong>
+    </header>
+    <main class="board">
+        <div class="memberBtnArea">
+            <a class="memberBtn" href="/">返回登入頁面</a>
+        </div>
+        <h1>{{message}}</h1>
+    </main>
+
+</body>
+</html>
+

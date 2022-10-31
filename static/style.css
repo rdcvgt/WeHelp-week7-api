@@ -1,0 +1,156 @@
+body{
+    margin: 0;
+    background-color: #f7f7f7;
+
+}
+
+.warning{
+    background-color: #252525;
+    padding: 20px;
+    text-align: center;
+    color: rgb(233, 233, 233)
+}
+
+.dataErr{
+    color: #c00000
+}
+
+.board{
+    max-width: 600px;
+    background-color: #fff;
+    margin: 20px auto;
+    box-shadow: 3px 3px 8px rgb(0, 0, 0, 0.2);
+    border-radius: 10px;
+    padding: 20px;
+    position: relative;
+}
+
+.nicknameArea{
+    margin: 10px 0;
+    width: 100%
+}
+
+.inputNickname{
+    padding: 5px;
+    border-radius: 5px;
+    border: 1px solid #dadada;
+}
+
+.inputContent{
+    border-radius: 5px;
+    border: 1px solid #dadada;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.submitBtn{
+    padding: 10px;
+    min-width:10%;
+    background-color: #fff;
+    border: 1px solid #dadada;
+    border-radius: 5px ;
+    margin: 10px 0;
+}
+
+.hr{
+    border: 1px solid #dadada;
+    margin: 20px auto;
+}
+
+.commentArea{
+    display: flex;
+    flex-wrap: wrap;
+    width: 95%;
+    height: auto;
+    margin-bottom: 30px;
+    
+}
+
+.avatarArea{
+    height: 20%;
+    width: 10%;
+    display: flex;
+    align-items: center;
+    /* justify-content: center; */
+}
+
+.authorAvarta{
+    flex: none;
+    min-width: 50px;
+    height: 50px;
+    border-radius: 50px;
+    background-color: #dadada;
+}
+
+.author{
+    width: 85%;
+    margin: 0px 10px;
+}
+
+
+
+.authorInfo{
+    display: flex;
+    margin: 10px 0;
+    /* width: 80%; */
+}
+
+.authorInfo .name{
+    color: #6067a5;
+    font-weight: 700;
+}
+
+.authorInfo .time{
+    color: #929292;
+}
+
+.content{
+    white-space: pre-line;
+    word-break: break-word;
+}
+
+.authorControl{
+    color: #929292;
+    text-align: center;
+    text-decoration: none;
+}
+
+/* ======= 會員登入註冊按鈕 */
+
+.memberBtnArea{
+    position: absolute;
+    width: auto;
+    height: auto;
+    right: 0px;
+    margin: 17px 20px;
+    display: flex
+}
+
+.memberBtn{
+    padding: 10px;
+    min-width:10%;
+    background-color: #fff;
+    border: 1px solid #dadada;
+    border-radius: 5px ; 
+    text-decoration: none;
+    color: #929292;
+    text-align: center;
+    cursor: pointer;
+    margin: 5px
+}
+
+.hideEdit{
+    display: none;
+}
+
+.pageHint{
+    color: #929292;
+    text-align: center;
+}
+
+.pageBtnArea{
+    display: flex;
+    margin: 20px;
+    align-items: center;
+    justify-content: center;
+}

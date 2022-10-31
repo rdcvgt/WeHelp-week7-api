@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="{{ url_for('static',filename='style.css') }}">
+    <title>留言板</title>
+</head>
+<body>
+    <header class="warning">
+        <strong>會員登入</strong>
+    </header>
+    <main class="board">
+        <div class="memberBtnArea">
+            <a class="memberBtn" href="index.php">回留言板</a>
+            <a class="memberBtn" href="register.php">註冊</a>
+        </div>
+
+        
+        <h1>Login</h1>
+        <form class="commentArea" method="POST"  action="handle_login.php">
+            <div class="nicknameArea">
+                <span>帳號：</span>
+                <input class="inputNickname" name="username" type="text">
+            </div>
+            <div class="nicknameArea">
+                <span>密碼：</span>
+                <input class="inputNickname" name="password" type="password">
+            </div>
+            <div>
+                <input class="submitBtn" type="submit">   
+            </div>
+        </form>
+    </main>
+
+</body>
+</html>
+

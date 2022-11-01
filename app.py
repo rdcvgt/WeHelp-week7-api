@@ -12,13 +12,15 @@ app =Flask(__name__)
 app.secret_key= secret_key()
 app.config['JSON_AS_ASCII'] = False
 
+poolname ="mysqlpool"
+poolsize = 5
+connectionpool = mysql.connector.pooling.MySQLConnectionPool(
+pool_name =poolname,pool_size=poolsize, pool_reset_session=True, host='localhost',user='root',password=mySqlPassword())
+
+
 #將 .get_connection() 存入 conn
 def conn():
     #connection pool 連線資料
-    poolname ="mysqlpool"
-    poolsize = 5
-    connectionpool = mysql.connector.pooling.MySQLConnectionPool(
-    pool_name =poolname,pool_size=poolsize, pool_reset_session=True, host='localhost',user='root',password=mySqlPassword())
     try:
         c = connectionpool.get_connection()
         return c
@@ -45,6 +47,21 @@ def close(c, cursor):
     cursor.close()
     c.close()  
 
+def loginHandle(username, password, c, cursor):
+    if (username == None or password == None):
+        return False
+    try:
+        sql = "SELECT password FROM member where username = %s"
+        user = (username,)
+        result = executeSql (cursor, sql, user)
+        hashed_password =result[0]
+        check_password = bcrypt.check_password_hash(hashed_password, password)
+        if ((f"{check_password}") != "True"):
+            return False 
+        return result
+    except Exception as e:
+        print ("資料庫執行有誤：", e)
+        return  False 
 
 #首頁
 @app.route("/")
@@ -68,13 +85,13 @@ def signup():
         result = executeSql (cursor, sql, user)
         if (result):   
             return redirect("/error?message=帳號已被註冊")
-        else:
-            hashed_password = bcrypt.generate_password_hash(password=password)
-            sql = "Insert into member (name, username, password ) values (%s, %s, %s)"
-            userInfo = (nickname, username, hashed_password)
-            executeSql (cursor, sql, userInfo)
-            c.commit()
-            return redirect("/") 
+        hashed_password = bcrypt.generate_password_hash(password=password)
+        sql = "Insert into member (name, username, password ) values (%s, %s, %s)"
+        userInfo = (nickname, username, hashed_password)
+        executeSql (cursor, sql, userInfo)
+        c.commit()
+        return redirect("/") 
+        
     except Exception as e:
         print ("處理註冊出現問題：", e)
 
@@ -130,21 +147,10 @@ def error():
 def member():
     username = session.get('username')
     password = session.get('password')
-    if (username== None and password == None):
-        return redirect("/")
-
-    try:
-        c = conn()
-        cursor = selectDb(c)
-        sql = "SELECT password FROM member where username = %s"
-        user = (username,)
-        result = executeSql (cursor, sql, user)
-        hashed_password =result[0]
-        check_password = bcrypt.check_password_hash(hashed_password, password)
-        if ((f"{check_password}") != "True"):
-            return redirect("/")
-    except Exception as e:
-        print ("資料庫執行有誤：", e)
+    c = conn()
+    cursor = selectDb(c)
+    result = loginHandle(username, password, c, cursor)
+    if not result:
         return redirect("/")
 
     try:    
@@ -172,21 +178,10 @@ def signout():
 def message():
     username = session.get('username')
     password = session.get('password')
-    if (username == None or password == None):
-        return redirect("/")
-
-    try:
-        c = conn()
-        cursor = selectDb(c)
-        sql = "SELECT password FROM member where username = %s"
-        user = (username,)
-        result = executeSql (cursor, sql, user)
-        hashed_password =result[0]
-        check_password = bcrypt.check_password_hash(hashed_password, password)
-        if ((f"{check_password}") != "True"):
-            return redirect("/")  
-    except Exception as e:
-        print ("資料庫執行有誤：", e)
+    c = conn()
+    cursor = selectDb(c)
+    result = loginHandle(username, password, c, cursor)
+    if not result:
         return redirect("/")
 
     try:
@@ -197,7 +192,6 @@ def message():
         cursor.execute(sql, user_content) 
         c.commit() 
         return redirect("/member")
-
 
     except Exception as e:
         print ("發送訊息出現問題：", e)
@@ -210,26 +204,15 @@ def message():
 def api_member():
     username = session.get('username')
     password = session.get('password')
+    c = conn()
+    cursor = selectDb(c)
     dataNull = {'data': None}
-    if (username == None or password == None):
+    result = loginHandle(username, password, c, cursor)
+    if not result:
         return dataNull
 
+    #GET username 並製作 api
     try:
-        c = conn()
-        cursor = selectDb(c)
-        sql = "SELECT password FROM member where username = %s"
-        user = (username,)
-        result = executeSql (cursor, sql, user)
-        hashed_password =result[0]
-        check_password = bcrypt.check_password_hash(hashed_password, password)
-        if ((f"{check_password}") != "True"):
-            return dataNull
-    except Exception as e:
-        print ("資料庫執行有誤：", e)
-        return dataNull
-
-    try:
-        #從網址取得 username 取得 user 其他資訊
         getUsername = (request.args.get('username'),)
         sql = "select id, name from member where username = %s" 
         result = executeSql (cursor, sql, getUsername)
@@ -250,34 +233,28 @@ def api_member():
     finally:
         close(c, cursor) 
 
+
 #api頁面：回覆patch資料更新狀態
 @app.route("/api/member",methods=["PATCH"] )
 def name_edit():
+    #登入驗證
     username = session.get('username')
     password = session.get('password')
-    if (username == None or password == None):
-        return errMessage
+    c = conn()
+    cursor = selectDb(c)
     okMessage =jsonify({"ok":True})
     errMessage =jsonify({"error":True})
-
-    try:
-        c = conn()
-        cursor = selectDb(c)
-        sql = "SELECT password FROM member where username = %s"
-        user = (username,)
-        result = executeSql (cursor, sql, user)
-        hashed_password =result[0]
-        check_password = bcrypt.check_password_hash(hashed_password, password)
-        if ((f"{check_password}") != "True"):
-            return errMessage
-    except Exception as e:
-        print ("資料庫執行有誤：", e)
+    result = loginHandle(username, password, c, cursor)
+    if not result:
         return errMessage
-        
+
     try:
         #取得 PATCH 的資料並更新
         data = request.json
         newName = data['name']
+        if not newName:
+            return errMessage
+
         sql = "update member set name = %s where username= %s"
         user_info =(newName, username)
         result = executeSql (cursor, sql, user_info)
@@ -291,6 +268,7 @@ def name_edit():
             
     except Exception as e:
         print ("更新 user name api 出現問題：",e)
+        return errMessage
     finally:
         close(c, cursor) 
 

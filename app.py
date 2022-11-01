@@ -54,17 +54,18 @@ def index():
 #處理註冊
 @app.route("/signup",methods=["POST"])
 def signup():  
+    nickname = request.form["nickname"]
+    username = request.form["username"]
+    password = request.form["password"]
+    if (not nickname or not username or not password):
+        return redirect("/error?message=欄位不得爲空")
+
     try:
         c = conn()  #呼叫連線程式
         cursor = selectDb(c)
-        nickname = request.form["nickname"]
-        username = request.form["username"]
-        password = request.form["password"]
         sql = "SELECT username FROM member where username = %s"
         user = (username,)
         result = executeSql (cursor, sql, user)
-        if (not nickname or not username or not password):
-            return redirect("/error?message=欄位不得爲空")
         if (result):   
             return redirect("/error?message=帳號已被註冊")
         else:
@@ -76,6 +77,7 @@ def signup():
             return redirect("/") 
     except Exception as e:
         print ("處理註冊出現問題：", e)
+
     finally:
         close(c, cursor)
 
@@ -93,20 +95,26 @@ def login():
         cursor = selectDb(c)
         sql = "SELECT * FROM member where username = %s"
         user = (username,)
-        result = executeSql (cursor, sql, user)
-        if (result != []):
-            user_id = result[0]
-            hashed_password = result[3]
-            check_password = bcrypt.check_password_hash(hashed_password, password)
-            if ((f"{check_password}") == "True"):
-                session['username'] = username
-                session['password'] = password
-                session['user_id'] = user_id                
-                return redirect("/member")
+        result = executeSql (cursor, sql, user)  
+        if (result == [] or result == None):
+            return redirect("/error?message=查無此帳號")
+    except:
+        return redirect("/error?message=帳號或密碼錯誤")
+    
+    try:
+        user_id = result[0]
+        hashed_password = result[3]
+        check_password = bcrypt.check_password_hash(hashed_password, password)
+        if ((f"{check_password}") != "True"):
+            return redirect("/error?message=密碼錯誤")
+        session['username'] = username
+        session['password'] = password
+        session['user_id'] = user_id                
+        return redirect("/member")
+
+    except:
         return redirect("/error?message=帳號或密碼錯誤")
 
-    except Exception as e:
-        print ("處理登入出現問題：", e)
     finally:
         close(c, cursor)        
     
@@ -122,27 +130,34 @@ def error():
 def member():
     username = session.get('username')
     password = session.get('password')
+    if (username== None and password == None):
+        return redirect("/")
 
     try:
         c = conn()
         cursor = selectDb(c)
-        if (username!= None and password != None):
-            sql = "SELECT password FROM member where username = %s"
-            user = (username,)
-            result = executeSql (cursor, sql, user)
-            hashed_password =result[0]
-            check_password = bcrypt.check_password_hash(hashed_password, password)
-
-            if ((f"{check_password}") == "True"):
-                #取姓名、帳號、時間、內文
-                sql = "select member.name, member.username, message.content, message.time from member inner join message on member.id = message.member_id order by message.time desc"
-                cursor.execute(sql)
-                result = cursor.fetchall()
-                return render_template("index.html", username=username, result=result) 
+        sql = "SELECT password FROM member where username = %s"
+        user = (username,)
+        result = executeSql (cursor, sql, user)
+        hashed_password =result[0]
+        check_password = bcrypt.check_password_hash(hashed_password, password)
+        if ((f"{check_password}") != "True"):
+            return redirect("/")
+    except Exception as e:
+        print ("資料庫執行有誤：", e)
         return redirect("/")
 
+    try:    
+        #取姓名、帳號、時間、內文
+        sql = "select member.name, member.username, message.content, message.time from member inner join message on member.id = message.member_id order by message.time desc"
+        cursor.execute(sql)
+        result = cursor.fetchall()
+        return render_template("index.html", username=username, result=result)          
+            
     except Exception as e:
-        print ("會員頁面出現問題：", e)
+        print ("資料庫執行有誤：", e)
+        return redirect("/")
+
     finally:
         close(c, cursor)        
 
@@ -157,23 +172,36 @@ def signout():
 def message():
     username = session.get('username')
     password = session.get('password')
+    if (username == None or password == None):
+        return redirect("/")
 
     try:
         c = conn()
         cursor = selectDb(c)
-        if (username!= None and password != None):
-            user_id = session.get('user_id')
-            #插入 message 資料表
-            content = request.form["content"]
-            sql = "Insert into message (member_id, content) values (%s, %s)"
-            user_content = (user_id, content)    
-            cursor.execute(sql, user_content) 
-            c.commit() 
-            return redirect("/member")
+        sql = "SELECT password FROM member where username = %s"
+        user = (username,)
+        result = executeSql (cursor, sql, user)
+        hashed_password =result[0]
+        check_password = bcrypt.check_password_hash(hashed_password, password)
+        if ((f"{check_password}") != "True"):
+            return redirect("/")  
+    except Exception as e:
+        print ("資料庫執行有誤：", e)
         return redirect("/")
+
+    try:
+        user_id = session.get('user_id')
+        content = request.form["content"]
+        sql = "Insert into message (member_id, content) values (%s, %s)"
+        user_content = (user_id, content)    
+        cursor.execute(sql, user_content) 
+        c.commit() 
+        return redirect("/member")
+
 
     except Exception as e:
         print ("發送訊息出現問題：", e)
+        return redirect("/")
     finally:
         close(c, cursor) 
 
@@ -183,26 +211,39 @@ def api_member():
     username = session.get('username')
     password = session.get('password')
     dataNull = {'data': None}
+    if (username == None or password == None):
+        return dataNull
 
     try:
         c = conn()
         cursor = selectDb(c)
-        if (username!= None and password != None):
-            #從網址取得 username 取得 user 其他資訊
-            getUsername = (request.args.get('username'),)
-            sql = "select id, name from member where username = %s" 
-            result = executeSql (cursor, sql, getUsername)
-            if (result):
-                data = {
-                    "id":result[0],
-                    "name":result[1],
-                    "username": getUsername
-                }
-                member = jsonify({
-                    "data": data
-                })
-                return member
-        return  dataNull
+        sql = "SELECT password FROM member where username = %s"
+        user = (username,)
+        result = executeSql (cursor, sql, user)
+        hashed_password =result[0]
+        check_password = bcrypt.check_password_hash(hashed_password, password)
+        if ((f"{check_password}") != "True"):
+            return dataNull
+    except Exception as e:
+        print ("資料庫執行有誤：", e)
+        return dataNull
+
+    try:
+        #從網址取得 username 取得 user 其他資訊
+        getUsername = (request.args.get('username'),)
+        sql = "select id, name from member where username = %s" 
+        result = executeSql (cursor, sql, getUsername)
+        if not result:
+            return dataNull
+        data = {
+            "id":result[0],
+            "name":result[1],
+            "username": getUsername
+        }
+        member = jsonify({
+            "data": data
+        })
+        return member
 
     except Exception as e:
         print ("user api 出現問題：", e)
@@ -214,28 +255,40 @@ def api_member():
 def name_edit():
     username = session.get('username')
     password = session.get('password')
+    if (username == None or password == None):
+        return errMessage
+    okMessage =jsonify({"ok":True})
+    errMessage =jsonify({"error":True})
 
     try:
         c = conn()
         cursor = selectDb(c)
-        if (username!= None and password != None):
-            #取得 PATCH 的資料並更新
-            data = request.json
-            newName = data['name']
-            sql = "update member set name = %s where username= %s"
-            user_info =(newName, username)
-            result = executeSql (cursor, sql, user_info)
-            rowcount = cursor.rowcount
-            c.commit()
-
-            okMessage =jsonify({"ok":True})
-            errMessage =jsonify({"error":True})
-            if(rowcount == 1):
-                return okMessage
-            else:
-                return errMessage
-
+        sql = "SELECT password FROM member where username = %s"
+        user = (username,)
+        result = executeSql (cursor, sql, user)
+        hashed_password =result[0]
+        check_password = bcrypt.check_password_hash(hashed_password, password)
+        if ((f"{check_password}") != "True"):
+            return errMessage
+    except Exception as e:
+        print ("資料庫執行有誤：", e)
         return errMessage
+        
+    try:
+        #取得 PATCH 的資料並更新
+        data = request.json
+        newName = data['name']
+        sql = "update member set name = %s where username= %s"
+        user_info =(newName, username)
+        result = executeSql (cursor, sql, user_info)
+        rowcount = cursor.rowcount
+        c.commit()
+
+        if(rowcount == 1):
+            return okMessage
+        else:
+            return errMessage
+            
     except Exception as e:
         print ("更新 user name api 出現問題：",e)
     finally:

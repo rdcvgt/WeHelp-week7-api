@@ -3,7 +3,6 @@ import mysql.connector
 from flask_bcrypt import Bcrypt
 from mysql.connector import pooling
 from password import *
-import json
 
 #密碼加密初始化
 bcrypt = Bcrypt()
@@ -76,7 +75,7 @@ def signup():
             c.commit()
             return redirect("/") 
     except Exception as e:
-        print (e)
+        print ("處理註冊出現問題：", e)
     finally:
         close(c, cursor)
 
@@ -107,7 +106,7 @@ def login():
         return redirect("/error?message=帳號或密碼錯誤")
 
     except Exception as e:
-        print (e)
+        print ("處理登入出現問題：", e)
     finally:
         close(c, cursor)        
     
@@ -143,7 +142,7 @@ def member():
         return redirect("/")
 
     except Exception as e:
-        print (e)
+        print ("會員頁面出現問題：", e)
     finally:
         close(c, cursor)        
 
@@ -174,7 +173,7 @@ def message():
         return redirect("/")
 
     except Exception as e:
-        print (e)
+        print ("發送訊息出現問題：", e)
     finally:
         close(c, cursor) 
 
@@ -206,7 +205,7 @@ def api_member():
         return  dataNull
 
     except Exception as e:
-        print (e)
+        print ("user api 出現問題：", e)
     finally:
         close(c, cursor) 
 
@@ -238,7 +237,7 @@ def name_edit():
 
         return errMessage
     except Exception as e:
-        print (e)
+        print ("更新 user name api 出現問題：",e)
     finally:
         close(c, cursor) 
 

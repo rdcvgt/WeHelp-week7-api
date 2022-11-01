@@ -1,9 +1,17 @@
-from flask import Flask, render_template ,redirect, request, session
+from flask import Flask, render_template ,redirect, request, session, jsonify
 import mysql.connector
 from flask_bcrypt import Bcrypt
 from mysql.connector import pooling
 from password import *
 import json
+
+#密碼加密初始化
+bcrypt = Bcrypt()
+
+#session key
+app =Flask(__name__)
+app.secret_key= secret_key()
+app.config['JSON_AS_ASCII'] = False
 
 #將 .get_connection() 存入 conn
 def conn():
@@ -37,13 +45,6 @@ def executeSql (cursor, sql, data=""):
 def close(c, cursor):
     cursor.close()
     c.close()  
-
-#密碼加密初始化
-bcrypt = Bcrypt()
-
-#session key
-app =Flask(__name__)
-app.secret_key= secret_key()
 
 
 #首頁
@@ -198,9 +199,9 @@ def api_member():
                     "name":result[1],
                     "username": getUsername
                 }
-                member = json.dumps({
+                member = jsonify({
                     "data": data
-                },ensure_ascii=False)
+                })
                 return member
         return  dataNull
 
@@ -228,8 +229,8 @@ def name_edit():
             rowcount = cursor.rowcount
             c.commit()
 
-            okMessage ={"ok":True}
-            errMessage ={"error":True}
+            okMessage =jsonify({"ok":True})
+            errMessage =jsonify({"error":True})
             if(rowcount == 1):
                 return okMessage
             else:
